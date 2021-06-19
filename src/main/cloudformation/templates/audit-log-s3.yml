@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "S3 to store audit log files."
+
+Parameters:
+  ProjectId:
+    Description: "Project ID"
+    Type: String
+    Default: common
+  EnvironmentId:
+    Description: "Environment ID. (ex.dev00,prd00)"
+    Type: String
+
+Resources:
+  S3BucketAuditLog:
+    #DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Sub ${ProjectId}-${EnvironmentId}-audit-log
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log
+        - Key: project-id
+          Value: !Ref ProjectId
+        - Key: environment-id
+          Value: !Ref EnvironmentId
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault: 
+              SSEAlgorithm: AES256
+      ObjectLockEnabled: false
+      AccessControl: Private
