@@ -5,6 +5,6 @@
     },
     {
         "ParameterKey": "EnvironmentId",
-        "ParameterValue": "test00"
+        "ParameterValue": "prd00"
     }
 ]

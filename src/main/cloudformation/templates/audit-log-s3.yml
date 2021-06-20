@@ -1,18 +1,18 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: "S3 to store audit log files."
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3 to store audit log files.
 
 Parameters:
   ProjectId:
-    Description: "Project ID"
+    Description: Project ID
     Type: String
     Default: common
   EnvironmentId:
-    Description: "Environment ID. (ex.dev00,prd00)"
+    Description: Environment ID (ex. test00,dev00,prd00)
     Type: String
 
 Resources:
   S3BucketAuditLog:
-    #DeletionPolicy: Retain
+    DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties: 
       BucketName: !Sub ${ProjectId}-${EnvironmentId}-audit-log
@@ -35,4 +35,47 @@ Resources:
           - ServerSideEncryptionByDefault: 
               SSEAlgorithm: AES256
       ObjectLockEnabled: false
-      AccessControl: Private
+      AccessControl: LogDeliveryWrite
+      LifecycleConfiguration:
+        Rules:
+          - Id: archive-old-objects
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 180
+                StorageClass: GLACIER
+            NoncurrentVersionTransitions:
+              - TransitionInDays: 180
+                StorageClass: GLACIER
+            ExpirationInDays: 730
+            NoncurrentVersionExpirationInDays: 730
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 14
+      #自身へのアクセスログの格納がエラーになるため、他のbuketへの格納を検討する
+      #LoggingBucket:
+        #DestinationBucketName: !Sub ${ProjectId}-${EnvironmentId}-audit-l
+        #LogFilePrefix: !Sub s3-access-log/${ProjectId}-${EnvironmentId}-audit-log
+  
+  S3BucketPolicyAuditLog:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3BucketAuditLog
+      PolicyDocument:
+        Statement:
+          - Sid: DenyIncorrectEncryptionHeader
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3BucketAuditLog, /* ] ]
+            Condition:
+              StringNotEquals:
+                "s3:x-amz-server-side-encryption": AES256
+          - Sid: DenyUnencryptedObjectUploads
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3BucketAuditLog, /* ] ]
+            Condition:
+              "Null":
+                "s3:x-amz-server-side-encryption": true
+
+
