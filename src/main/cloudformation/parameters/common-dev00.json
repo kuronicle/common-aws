@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterKey": "ProjectId",
+        "ParameterValue": "common"
+    },
+    {
+        "ParameterKey": "EnvironmentId",
+        "ParameterValue": "dev00"
+    }
+]
