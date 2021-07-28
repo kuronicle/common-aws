@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: S3 to store audit log files.
+Description: AWS resources to store audit logs.
 
 Parameters:
   ProjectId:
@@ -11,8 +11,10 @@ Parameters:
     Type: String
 
 Resources:
+  # 監査ログS3バケット
   S3BucketAuditLog:
-    DeletionPolicy: Retain
+    # TODO: 開発中に削除を容易にするためRetainをoff。開発完了後に戻す。
+    # DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties: 
       BucketName: !Sub ${ProjectId}-${EnvironmentId}-audit-log
@@ -21,8 +23,9 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-      VersioningConfiguration:
-        Status: Enabled
+      # TODO: 開発時に削除を容易にするためVersioningを一時的にoffにしている。開発完了後に戻す。
+      # VersioningConfiguration:
+      #   Status: Enable
       Tags: 
         - Key: Name
           Value: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log
@@ -50,32 +53,14 @@ Resources:
             NoncurrentVersionExpirationInDays: 730
             AbortIncompleteMultipartUpload:
               DaysAfterInitiation: 14
-      #自身へのアクセスログの格納がエラーになるため、他のbuketへの格納を検討する
-      #LoggingBucket:
-        #DestinationBucketName: !Sub ${ProjectId}-${EnvironmentId}-audit-l
-        #LogFilePrefix: !Sub s3-access-log/${ProjectId}-${EnvironmentId}-audit-log
-  
-  S3BucketPolicyAuditLog:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref S3BucketAuditLog
-      PolicyDocument:
-        Statement:
-          - Sid: DenyIncorrectEncryptionHeader
-            Effect: Deny
-            Principal: "*"
-            Action: s3:PutObject
-            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3BucketAuditLog, /* ] ]
-            Condition:
-              StringNotEquals:
-                "s3:x-amz-server-side-encryption": AES256
-          - Sid: DenyUnencryptedObjectUploads
-            Effect: Deny
-            Principal: "*"
-            Action: s3:PutObject
-            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3BucketAuditLog, /* ] ]
-            Condition:
-              "Null":
-                "s3:x-amz-server-side-encryption": true
+      # TODO: 自身にログを保持すると無限ループ(ログを保存するPutリクエストのログを保存）してしまうため、格納先を検討する必要がある。
+      # LoggingConfiguration:
+      #   DestinationBucketName: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log
+      #   LogFilePrefix: !Sub s3-access-log/${ProjectId}-${EnvironmentId}-audit-log
 
-
+Outputs:
+  S3BucketAuditLog:
+    Description: bucket name of s3-bucket-audit-log
+    Value: !Ref S3BucketAuditLog
+    Export:
+      Name: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log
