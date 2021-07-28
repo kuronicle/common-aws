@@ -11,8 +11,9 @@ Parameters:
     Type: String
 
 Resources:
+  # Deploy Artifacts S3バケット
   S3BucketDeployArtifacts:
-    # 開発中に削除を容易にするためRetainをoff。
+    # TODO: 開発中に削除を容易にするためRetainをoff。開発完了後に戻す。
     # DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties: 
@@ -41,7 +42,7 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName:
           Fn::ImportValue:
-            !Sub ${ProjectId}-${EnvironmentId}-audit-log-s3:s3-bucket-audit-log
+            !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log
         LogFilePrefix: !Sub s3-access-log/${ProjectId}-${EnvironmentId}-deploy-artifacts/
 
 Outputs:
@@ -49,4 +50,4 @@ Outputs:
     Description: bucket name of s3-bucket-deploy-artifacts
     Value: !Ref S3BucketDeployArtifacts
     Export:
-      Name: !Join [ ":", [ !Ref "AWS::StackName", s3-bucket-deploy-artifacts ] ]
+      Name: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-deploy-artifacts

@@ -55,7 +55,7 @@ Resources:
               DaysAfterInitiation: 14
       # TODO: 自身にログを保持すると無限ループ(ログを保存するPutリクエストのログを保存）してしまうため、格納先を検討する必要がある。
       # LoggingConfiguration:
-      #   DestinationBucketName: !Sub ${ProjectId}-${EnvironmentId}-audit-log
+      #   DestinationBucketName: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log
       #   LogFilePrefix: !Sub s3-access-log/${ProjectId}-${EnvironmentId}-audit-log
 
 Outputs:
@@ -63,4 +63,4 @@ Outputs:
     Description: bucket name of s3-bucket-audit-log
     Value: !Ref S3BucketAuditLog
     Export:
-      Name: !Join [ ":", [ !Ref "AWS::StackName", s3-bucket-audit-log ] ]
+      Name: !Sub ${ProjectId}-${EnvironmentId}-s3-bucket-audit-log

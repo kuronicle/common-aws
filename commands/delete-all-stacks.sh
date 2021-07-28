@@ -1,4 +1,5 @@
 #!/bin/bash
+export AWS_CLI_FILE_ENCODING=UTF-8
 
 if [ $# != 2 ]; then
     echo "Usage: $(basename $0) <project-id> <env-id>"
